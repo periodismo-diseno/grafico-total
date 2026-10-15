@@ -1,355 +1,244 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-slate-50">
+<html lang="es" class="h-full bg-transparent">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estadísticas Interactivas de Femicidios (2021-2025)</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- FontAwesome para íconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Gráfico de Femicidios en Chile (2021 - 2025)</title>
     
-    <!-- Google Fonts: Quicksand (Títulos) y Montserrat (Texto) -->
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js DataLabels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <!-- Google Font: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Montserrat', 'sans-serif'],
-                        title: ['Quicksand', 'sans-serif'],
-                    },
-                    colors: {
-                        femicidio: {
-                            consumado: '#DC2626', // Rojo
-                            frustrado: '#2563EB', // Azul
-                            tentado: '#D97706',   // Ámbar
-                        }
+                        sans: ['Inter', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
+    
     <style>
         body {
-            font-family: 'Montserrat', sans-serif;
-        }
-        h1, h2, h3, h4, h5, h6, .font-title {
-            font-family: 'Quicksand', sans-serif;
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-        }
-        .badge-toggle {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .badge-toggle.inactive {
-            opacity: 0.35;
-            filter: grayscale(80%);
-            transform: scale(0.96);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+            overflow-x: hidden;
         }
     </style>
 </head>
-<body class="text-slate-800 antialiased min-h-full p-4 sm:p-6 lg:p-8 flex flex-col justify-center items-center">
+<body class="p-2 sm:p-4 text-slate-800">
 
-    <main class="w-full max-w-6xl mx-auto space-y-6">
+    <!-- Card Wrapper / Widget Container -->
+    <div class="max-w-5xl mx-auto bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/90 flex flex-col justify-between min-h-[480px]">
         
-        <!-- ENCABEZADO PRINCIPAL -->
-        <header class="glass-card rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Header: Title & Subtitle -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-2 border-b border-slate-100">
             <div>
-                <div class="flex items-center gap-2 text-xs font-bold text-rose-600 tracking-wider uppercase mb-1 font-title">
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-                    Reporte Estadístico Oficial
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 mb-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span> Estadísticas Oficiales
                 </div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight font-title">
-                    Evolución de Femicidios en Chile (2021 - 2025)
+                <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-snug">
+                    Evolución de Femicidios en Chile (2021 – 2025)
                 </h1>
-                <p class="text-slate-600 text-sm mt-1 flex items-center gap-1.5 font-medium">
-                    <i class="fa-solid fa-building-columns text-slate-400"></i>
-                    Fuente: <span class="text-slate-800 font-semibold">Servicio Nacional de la Mujer y la Equidad de Género (SernamEG)</span>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    Comparativa de casos registrados por tipo de femicidio
                 </p>
             </div>
-            
-            <!-- Acciones generales -->
-            <div class="flex items-center gap-3">
-                <button id="btnExportCSV" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 shadow-sm transition-all focus:ring-2 focus:ring-slate-200">
-                    <i class="fa-solid fa-file-csv text-emerald-600"></i> Exportar CSV
-                </button>
-                <button id="btnReset" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 shadow-sm transition-all">
-                    <i class="fa-solid fa-rotate-left"></i> Restablecer
-                </button>
+
+            <!-- Interactive Hint -->
+            <div class="hidden md:flex items-center gap-1.5 text-xs text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 self-start sm:self-center">
+                <i class="fa-solid fa-hand-pointer text-slate-400"></i>
+                <span>Haz clic en la leyenda para filtrar series</span>
             </div>
         </header>
 
-        <!-- TARJETAS DE KPIS / RESUMEN -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Consumado -->
-            <div id="kpiConsumado" class="glass-card rounded-2xl p-5 shadow-sm border-l-4 border-l-red-600 hover:shadow-md transition-shadow">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 font-title">Consumados</p>
-                        <h3 id="valConsumado" class="text-3xl font-bold text-slate-900 mt-1 font-title">217</h3>
-                    </div>
-                    <span class="p-2.5 bg-red-50 text-red-600 rounded-xl">
-                        <i class="fa-solid fa-triangle-exclamation text-lg"></i>
-                    </span>
-                </div>
-                <div class="mt-3 flex items-center gap-2 text-xs text-slate-500 font-medium">
-                    <span class="text-slate-700 font-semibold" id="promConsumado">Promedio: 43.4 / año</span>
-                    <span>•</span>
-                    <span>Total acumulado</span>
-                </div>
+        <!-- Chart Container -->
+        <div class="relative w-full h-[320px] sm:h-[380px] my-auto">
+            <canvas id="femicidiosChart"></canvas>
+        </div>
+
+        <!-- Footer: Source Attribution -->
+        <footer class="pt-4 mt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-building-columns text-slate-400"></i>
+                <span class="font-medium text-slate-700">Fuente:</span>
+                <span>Servicio Nacional de la Mujer y la Equidad de Género (SernamEG)</span>
             </div>
-
-            <!-- Frustrado -->
-            <div id="kpiFrustrado" class="glass-card rounded-2xl p-5 shadow-sm border-l-4 border-l-blue-600 hover:shadow-md transition-shadow">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 font-title">Frustrados</p>
-                        <h3 id="valFrustrado" class="text-3xl font-bold text-slate-900 mt-1 font-title">1,251</h3>
-                    </div>
-                    <span class="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
-                        <i class="fa-solid fa-shield-halved text-lg"></i>
-                    </span>
-                </div>
-                <div class="mt-3 flex items-center gap-2 text-xs text-slate-500 font-medium">
-                    <span class="text-slate-700 font-semibold" id="promFrustrado">Promedio: 250.2 / año</span>
-                    <span>•</span>
-                    <span>Total acumulado</span>
-                </div>
+            <div class="text-[11px] text-slate-400">
+                Periodo 2021 - 2025
             </div>
+        </footer>
 
-            <!-- Tentado -->
-            <div id="kpiTentado" class="glass-card rounded-2xl p-5 shadow-sm border-l-4 border-l-amber-600 hover:shadow-md transition-shadow">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 font-title">Tentados</p>
-                        <h3 id="valTentado" class="text-3xl font-bold text-slate-900 mt-1 font-title">260</h3>
-                    </div>
-                    <span class="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
-                        <i class="fa-solid fa-hand-paper text-lg"></i>
-                    </span>
-                </div>
-                <div class="mt-3 flex items-center gap-2 text-xs text-slate-500 font-medium">
-                    <span class="text-slate-700 font-semibold" id="promTentado">Promedio: 52.0 / año</span>
-                    <span>•</span>
-                    <span>Total acumulado</span>
-                </div>
-            </div>
-        </section>
+    </div>
 
-        <!-- CONTENEDOR PRINCIPAL DEL GRÁFICO -->
-        <section class="glass-card rounded-2xl p-5 sm:p-7 shadow-sm space-y-6">
-            
-            <!-- Barra de Herramientas y Filtros -->
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-                
-                <!-- Leyendas / Filtros de Categorías -->
-                <div class="space-y-1.5">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block font-title">Categorías (Haz clic para ocultar/mostrar)</span>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button id="toggleConsumado" data-dataset="0" class="badge-toggle px-3.5 py-1.5 rounded-xl text-xs font-bold bg-red-50 text-red-700 border border-red-200 flex items-center gap-2 cursor-pointer shadow-sm font-title">
-                            <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span> Consumado
-                        </button>
-                        <button id="toggleFrustrado" data-dataset="1" class="badge-toggle px-3.5 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-2 cursor-pointer shadow-sm font-title">
-                            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> Frustrado
-                        </button>
-                        <button id="toggleTentado" data-dataset="2" class="badge-toggle px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-2 cursor-pointer shadow-sm font-title">
-                            <span class="w-2.5 h-2.5 rounded-full bg-amber-600"></span> Tentado
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Filtros por Rango de Años -->
-                <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 bg-slate-100/80 p-2 rounded-xl text-xs font-medium">
-                    <div class="flex items-center gap-1.5 px-2 text-slate-600 font-semibold font-title">
-                        <i class="fa-solid fa-calendar-days text-indigo-600"></i>
-                        <span>Años:</span>
-                    </div>
-                    <select id="selectStartYear" class="bg-white text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm cursor-pointer font-title">
-                        <option value="2021" selected>2021</option>
-                        <option value="2022">2022</option>
-                        <option value="2023">2023</option>
-                        <option value="2024">2024</option>
-                    </select>
-                    <span class="text-slate-400 font-bold">hasta</span>
-                    <select id="selectEndYear" class="bg-white text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm cursor-pointer font-title">
-                        <option value="2022">2022</option>
-                        <option value="2023">2023</option>
-                        <option value="2024">2024</option>
-                        <option value="2025" selected>2025</option>
-                    </select>
-                </div>
-
-            </div>
-
-            <!-- Canvas del Gráfico Chart.js -->
-            <div class="relative w-full h-[360px] sm:h-[420px] lg:h-[460px]">
-                <canvas id="femicidiosChart"></canvas>
-            </div>
-
-            <!-- Pie de Gráfico e Información Oficial -->
-            <div class="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 pt-3 gap-2 border-t border-slate-100 font-medium">
-                <div class="flex items-center gap-1.5">
-                    <i class="fa-solid fa-circle-info text-indigo-500"></i>
-                    <span>Pasa el cursor sobre los puntos para revisar las cifras exactas.</span>
-                </div>
-                <div class="text-right">
-                    <span>Fuente oficial: </span>
-                    <strong class="text-slate-700 font-semibold">Servicio Nacional de la Mujer y la Equidad de Género (SerNAMEG)</strong>
-                </div>
-            </div>
-
-        </section>
-
-    </main>
-
+    <!-- Chart Configuration Script -->
     <script>
-        // Datos proporcionados
-        const rawData = [
-            {
-                "Tipo de Femicidio": "Consumado",
-                "2021": 44,
-                "2022": 43,
-                "2023": 42,
-                "2024": 44,
-                "2025": 44
-            },
-            {
-                "Tipo de Femicidio": "Frustrado",
-                "2021": 163,
-                "2022": 180,
-                "2023": 259,
-                "2024": 319,
-                "2025": 330
-            },
-            {
-                "Tipo de Femicidio": "Tentado",
-                "2021": 24,
-                "2022": 28,
-                "2023": 47,
-                "2024": 91,
-                "2025": 70
-            }
-        ];
+        // Registrar el plugin de DataLabels
+        Chart.register(ChartDataLabels);
 
-        const allYears = ["2021", "2022", "2023", "2024", "2025"];
-        
-        // Colores y diseño gráfico
-        const colorPalette = {
-            consumado: {
-                border: '#DC2626',
-                bg: 'rgba(220, 38, 38, 0.08)',
-                point: '#991B1B'
-            },
-            frustrado: {
-                border: '#2563EB',
-                bg: 'rgba(37, 99, 235, 0.08)',
-                point: '#1D4ED8'
-            },
-            tentado: {
-                border: '#D97706',
-                bg: 'rgba(217, 119, 6, 0.08)',
-                point: '#B45309'
-            }
-        };
+        // Datos oficiales del gráfico
+        const years = ["2021", "2022", "2023", "2024", "2025"];
+        const dataConsumado = [44, 43, 42, 44, 44];
+        const dataFrustrado = [163, 180, 259, 319, 330];
+        const dataTentado   = [24, 28, 47, 91, 70];
 
-        let chartInstance = null;
-        let currentYears = [...allYears];
-
-        function initChart() {
+        window.onload = function() {
             const ctx = document.getElementById('femicidiosChart').getContext('2d');
 
-            const datasets = [
-                {
-                    label: 'Consumado',
-                    data: getFilteredData('Consumado', currentYears),
-                    borderColor: colorPalette.consumado.border,
-                    backgroundColor: colorPalette.consumado.bg,
-                    pointBackgroundColor: colorPalette.consumado.point,
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 9,
-                    tension: 0.3,
-                    fill: true,
-                    borderWidth: 3
-                },
-                {
-                    label: 'Frustrado',
-                    data: getFilteredData('Frustrado', currentYears),
-                    borderColor: colorPalette.frustrado.border,
-                    backgroundColor: colorPalette.frustrado.bg,
-                    pointBackgroundColor: colorPalette.frustrado.point,
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 9,
-                    tension: 0.3,
-                    fill: true,
-                    borderWidth: 3
-                },
-                {
-                    label: 'Tentado',
-                    data: getFilteredData('Tentado', currentYears),
-                    borderColor: colorPalette.tentado.border,
-                    backgroundColor: colorPalette.tentado.bg,
-                    pointBackgroundColor: colorPalette.tentado.point,
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 9,
-                    tension: 0.3,
-                    fill: true,
-                    borderWidth: 3
-                }
-            ];
+            // Crear gradientes suaves para las áreas bajo la curva
+            const gradConsumado = ctx.createLinearGradient(0, 0, 0, 320);
+            gradConsumado.addColorStop(0, 'rgba(225, 29, 72, 0.12)');
+            gradConsumado.addColorStop(1, 'rgba(225, 29, 72, 0.0)');
 
-            chartInstance = new Chart(ctx, {
+            const gradFrustrado = ctx.createLinearGradient(0, 0, 0, 320);
+            gradFrustrado.addColorStop(0, 'rgba(217, 119, 6, 0.15)');
+            gradFrustrado.addColorStop(1, 'rgba(217, 119, 6, 0.0)');
+
+            const gradTentado = ctx.createLinearGradient(0, 0, 0, 320);
+            gradTentado.addColorStop(0, 'rgba(79, 70, 229, 0.12)');
+            gradTentado.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
+
+            new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: currentYears,
-                    datasets: datasets
+                    labels: years,
+                    datasets: [
+                        {
+                            label: 'Femicidio Consumado',
+                            data: dataConsumado,
+                            borderColor: '#E11D48', // Rose / Red
+                            backgroundColor: gradConsumado,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 6,
+                            pointHoverRadius: 9,
+                            pointBackgroundColor: '#E11D48',
+                            pointBorderColor: '#FFFFFF',
+                            pointBorderWidth: 2.5,
+                            datalabels: {
+                                align: 'top',
+                                anchor: 'center',
+                                offset: 8
+                            }
+                        },
+                        {
+                            label: 'Femicidio Frustrado',
+                            data: dataFrustrado,
+                            borderColor: '#D97706', // Amber / Orange
+                            backgroundColor: gradFrustrado,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 6,
+                            pointHoverRadius: 9,
+                            pointBackgroundColor: '#D97706',
+                            pointBorderColor: '#FFFFFF',
+                            pointBorderWidth: 2.5,
+                            datalabels: {
+                                align: 'top',
+                                anchor: 'center',
+                                offset: 8
+                            }
+                        },
+                        {
+                            label: 'Femicidio Tentado',
+                            data: dataTentado,
+                            borderColor: '#4F46E5', // Indigo / Blue
+                            backgroundColor: gradTentado,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 6,
+                            pointHoverRadius: 9,
+                            pointBackgroundColor: '#4F46E5',
+                            pointBorderColor: '#FFFFFF',
+                            pointBorderWidth: 2.5,
+                            datalabels: {
+                                align: 'top',
+                                anchor: 'center',
+                                offset: 8
+                            }
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 25,
+                            right: 20,
+                            left: 10,
+                            bottom: 5
+                        }
+                    },
                     interaction: {
                         mode: 'index',
                         intersect: false,
                     },
                     plugins: {
                         legend: {
-                            display: false
+                            display: true,
+                            position: 'top',
+                            align: 'center',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                boxWidth: 8,
+                                boxHeight: 8,
+                                padding: 20,
+                                font: {
+                                    family: 'Inter',
+                                    size: 12,
+                                    weight: '600'
+                                },
+                                color: '#334155'
+                            }
                         },
                         tooltip: {
-                            enabled: true,
-                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                            titleFont: { family: 'Quicksand', size: 14, weight: 'bold' },
-                            bodyFont: { family: 'Montserrat', size: 13 },
+                            backgroundColor: '#0F172A',
+                            titleFont: { family: 'Inter', size: 13, weight: '700' },
+                            bodyFont: { family: 'Inter', size: 12, weight: '500' },
                             padding: 12,
-                            cornerRadius: 12,
-                            boxPadding: 6,
+                            cornerRadius: 10,
+                            displayColors: true,
                             usePointStyle: true,
                             callbacks: {
                                 label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        label += new Intl.NumberFormat('es-CL').format(context.parsed.y) + ' casos';
-                                    }
-                                    return label;
+                                    return ` ${context.dataset.label}: ${context.raw} casos`;
                                 }
+                            }
+                        },
+                        // Configuración del Plugin DataLabels (cifras sobre los puntos)
+                        datalabels: {
+                            color: function(context) {
+                                return context.dataset.borderColor;
+                            },
+                            font: {
+                                family: 'Inter',
+                                size: 11,
+                                weight: '700'
+                            },
+                            formatter: function(value) {
+                                return value;
+                            },
+                            listeners: {
+                                // Evitar interferencias visuales si se ocultan datos
                             }
                         }
                     },
@@ -359,129 +248,33 @@
                                 display: false
                             },
                             ticks: {
-                                font: { family: 'Quicksand', size: 13, weight: '700' },
+                                font: {
+                                    family: 'Inter',
+                                    size: 13,
+                                    weight: '600'
+                                },
                                 color: '#475569'
                             }
                         },
                         y: {
-                            beginAtZero: true,
                             grid: {
-                                color: 'rgba(226, 232, 240, 0.8)',
-                                strokeDash: [4, 4]
+                                color: '#F1F5F9',
+                                strokeDasharray: [4, 4]
                             },
                             ticks: {
-                                font: { family: 'Montserrat', size: 12 },
-                                color: '#64748B',
-                                padding: 8
-                            }
-                        }
-                    },
-                    animations: {
-                        tension: {
-                            duration: 800,
-                            easing: 'easeInOutCubic'
+                                font: {
+                                    family: 'Inter',
+                                    size: 11
+                                },
+                                color: '#94A3B8',
+                                stepSize: 50
+                            },
+                            beginAtZero: true,
+                            suggestedMax: 360
                         }
                     }
                 }
             });
-
-            updateKPIs();
-        }
-
-        function getFilteredData(tipo, years) {
-            const item = rawData.find(d => d["Tipo de Femicidio"] === tipo);
-            return years.map(y => item[y]);
-        }
-
-        function updateKPIs() {
-            ['Consumado', 'Frustrado', 'Tentado'].forEach(tipo => {
-                const data = getFilteredData(tipo, currentYears);
-                const sum = data.reduce((a, b) => a + b, 0);
-                const avg = (sum / (data.length || 1)).toFixed(1);
-
-                document.getElementById(`val${tipo}`).innerText = new Intl.NumberFormat('es-CL').format(sum);
-                document.getElementById(`prom${tipo}`).innerText = `Promedio: ${avg} / año`;
-            });
-        }
-
-        function setupEventListeners() {
-            const selectStart = document.getElementById('selectStartYear');
-            const selectEnd = document.getElementById('selectEndYear');
-
-            function handleYearChange() {
-                let start = parseInt(selectStart.value);
-                let end = parseInt(selectEnd.value);
-
-                if (start > end) {
-                    end = start;
-                    selectEnd.value = end.toString();
-                }
-
-                currentYears = allYears.filter(y => {
-                    const val = parseInt(y);
-                    return val >= start && val <= end;
-                });
-
-                chartInstance.data.labels = currentYears;
-                chartInstance.data.datasets[0].data = getFilteredData('Consumado', currentYears);
-                chartInstance.data.datasets[1].data = getFilteredData('Frustrado', currentYears);
-                chartInstance.data.datasets[2].data = getFilteredData('Tentado', currentYears);
-                
-                chartInstance.update();
-                updateKPIs();
-            }
-
-            selectStart.addEventListener('change', handleYearChange);
-            selectEnd.addEventListener('change', handleYearChange);
-
-            document.querySelectorAll('.badge-toggle').forEach(button => {
-                button.addEventListener('click', () => {
-                    const datasetIndex = parseInt(button.getAttribute('data-dataset'));
-                    const meta = chartInstance.getDatasetMeta(datasetIndex);
-
-                    meta.hidden = meta.hidden === null ? !chartInstance.data.datasets[datasetIndex].hidden : null;
-                    button.classList.toggle('inactive', meta.hidden);
-
-                    chartInstance.update();
-                });
-            });
-
-            document.getElementById('btnReset').addEventListener('click', () => {
-                selectStart.value = "2021";
-                selectEnd.value = "2025";
-                
-                document.querySelectorAll('.badge-toggle').forEach((button, idx) => {
-                    button.classList.remove('inactive');
-                    if (chartInstance) {
-                        chartInstance.getDatasetMeta(idx).hidden = null;
-                    }
-                });
-
-                handleYearChange();
-            });
-
-            document.getElementById('btnExportCSV').addEventListener('click', () => {
-                let csvContent = "data:text/csv;charset=utf-8,Tipo de Femicidio," + currentYears.join(",") + "\n";
-                
-                rawData.forEach(row => {
-                    const tipo = row["Tipo de Femicidio"];
-                    const values = currentYears.map(y => row[y]);
-                    csvContent += `${tipo},${values.join(",")}\n`;
-                });
-
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", `femicidios_SerNAMEG_${selectStart.value}-${selectEnd.value}.csv`);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            });
-        }
-
-        window.onload = function() {
-            initChart();
-            setupEventListeners();
         };
     </script>
 </body>
